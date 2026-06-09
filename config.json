@@ -1,0 +1,64 @@
+{
+  "appName": "BAHA",
+  "totalLogins": 7,
+  "totalAccesses": 1,
+  "siteInfo": {
+    "developer": "مركز البيانات والأنظمة - إدارة كهرباء الباحة",
+    "contact": "مصطفى الغامدي - 103832",
+    "inquiry": "للإستفسارات: مصطفى الغامدي 103832"
+  },
+  "folders": [
+    {
+      "id": 1,
+      "name": "بيانات KMZ",
+      "parentId": null
+    },
+    {
+      "id": 2,
+      "name": "الباحة",
+      "parentId": 1
+    }
+  ],
+  "kmzFiles": [
+    {
+      "id": 1,
+      "name": "test",
+      "description": "",
+      "path": "C:\\Users\\User\\Documents\\new\\uploads\\8b6c14e4f2bc4c88b13ac05e2b45f739.kmz",
+      "fileName": "test.kmz",
+      "folderId": 1
+    },
+    {
+      "id": 2,
+      "name": "214045062 - Copy (2)",
+      "description": "",
+      "path": "C:\\Users\\User\\Documents\\new\\uploads\\771e86dd414947789ceeb5c982c51b64.kmz",
+      "fileName": "214045062 - Copy (2).kmz",
+      "folderId": 2
+    },
+    {
+      "id": 3,
+      "name": "214045062 - Copy (3)",
+      "description": "",
+      "path": "C:\\Users\\User\\Documents\\new\\uploads\\5e1acc2a396d4545aae8625fed15d173.kmz",
+      "fileName": "214045062 - Copy (3).kmz",
+      "folderId": 2
+    },
+    {
+      "id": 4,
+      "name": "214045062 - Copy (4)",
+      "description": "",
+      "path": "C:\\Users\\User\\Documents\\new\\uploads\\afd524cb622b4c6e9f6f60f28927e7f1.kmz",
+      "fileName": "214045062 - Copy (4).kmz",
+      "folderId": 2
+    },
+    {
+      "id": 5,
+      "name": "214045062 - Copy (5)",
+      "description": "",
+      "path": "C:\\Users\\User\\Documents\\new\\uploads\\96dd0b8bd09c4547bb2055ca28ae5aab.kmz",
+      "fileName": "214045062 - Copy (5).kmz",
+      "folderId": 2
+    }
+  ]
+}
