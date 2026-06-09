@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BAHA</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<button class="sb-toggle" id="st">☰</button>
+<div class="dash">
+<aside class="sb" id="sb">
+<div class="sb-hdr"><div class="ic">B</div><h2>BAHA</h2><p id="ud"></p></div>
+<nav class="sb-nav">
+<a href="#" class="nv act" id="navFiles"><span class="ico">📂</span> الملفات</a>
+<a href="#" class="nv" id="navDash"><span class="ico">📊</span> الإحصائيات</a>
+<a href="admin.html" class="nv" id="alnk" style="display:none"><span class="ico">⚙️</span> الإدارة</a>
+<a href="#" class="nv" onclick="infoModal()"><span class="ico">ℹ️</span> معلومات</a>
+<a href="#" class="nv" onclick="inqModal()"><span class="ico">📞</span> استفسارات</a>
+<a href="#" class="nv" id="lo"><span class="ico">🚪</span> خروج</a>
+</nav>
+<div class="sb-ft"><div class="usr"><div class="usr-av" id="ua">م</div><div><div class="usr-nm" id="un">مستخدم</div><div class="usr-rl" id="ur">عضو</div></div></div></div>
+</aside>
+<main class="mn">
+<div class="ph"><h1 id="welcomeMsg">أهلاً بك</h1><p id="subMsg">اختر مجلداً لفتحه</p></div>
+
+<div id="fileView">
+<div class="tb">
+<div style="display:flex;align-items:center;gap:8px;flex:1">
+<button class="btn btn-out btn-sm" id="backBtn" style="display:none">🔙 رجوع</button>
+<span id="bc" class="bc"></span>
+</div>
+<div style="display:flex;gap:8px">
+<input type="text" id="srch" placeholder="بحث..." style="padding:8px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;background:rgba(255,255,255,0.05);color:var(--t);font-size:13px;width:160px;outline:none;transition:border-color 0.2s" oninput="flt()" onfocus="this.style.borderColor='var(--s)'" onblur="this.style.borderColor='rgba(255,255,255,0.15)'">
+<button class="btn btn-suc btn-sm" onclick="upModal()" id="upBtn">📤 رفع</button>
+</div>
+</div>
+<div class="load" id="load"><div class="sp"></div><p>جاري التحميل...</p></div>
+<div class="grid" id="lst" style="display:none"></div>
+<div class="empty" id="emp" style="display:none"><div class="eic">📁</div><h3>لا توجد ملفات</h3><p>تواصل مع المدير</p></div>
+<div class="none" id="no" style="display:none"><div class="eic">🔍</div><h3>لا نتائج</h3><p>حاول بكلمة أخرى</p></div>
+</div>
+
+<div id="dashView" style="display:none">
+<div class="dash-grid">
+<div class="dash-card dc1"><div class="dc-ic">👥</div><div class="dc-num" id="dUsers">0</div><div class="dc-lbl">إجمالي المستخدمين</div><div class="dc-bar"><div class="dc-fill" id="dUsersBar" style="width:0%"></div></div></div>
+<div class="dash-card dc2"><div class="dc-ic">🔑</div><div class="dc-num" id="dLogins">0</div><div class="dc-lbl">إجمالي الدخول</div><div class="dc-bar"><div class="dc-fill" id="dLoginsBar" style="width:0%"></div></div></div>
+<div class="dash-card dc3"><div class="dc-ic">📁</div><div class="dc-num" id="dFiles">0</div><div class="dc-lbl">إجمالي الملفات</div><div class="dc-bar"><div class="dc-fill" id="dFilesBar" style="width:0%"></div></div></div>
+<div class="dash-card dc4"><div class="dc-ic">📥</div><div class="dc-num" id="dAccesses">0</div><div class="dc-lbl">مرات التحميل</div><div class="dc-bar"><div class="dc-fill" id="dAccessesBar" style="width:0%"></div></div></div>
+</div>
+<div style="margin-top:20px">
+<div class="dash-card" style="padding:20px;text-align:right">
+<h3 style="margin-bottom:15px;color:var(--t);font-size:16px;display:flex;align-items:center;gap:8px"><span>📈</span> ملخص سريع</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:12px"><div style="font-size:13px;color:var(--ts);margin-bottom:4px">المجلدات</div><div style="font-size:20px;font-weight:700;color:var(--s)" id="dFolders">0</div></div>
+<div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:12px"><div style="font-size:13px;color:var(--ts);margin-bottom:4px">المستخدمين</div><div style="font-size:20px;font-weight:700;color:#f39c12" id="dUsers2">0</div></div>
+<div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:12px"><div style="font-size:13px;color:var(--ts);margin-bottom:4px">الملفات</div><div style="font-size:20px;font-weight:700;color:#3498db" id="dFiles2">0</div></div>
+<div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:12px"><div style="font-size:13px;color:var(--ts);margin-bottom:4px">مرات التحميل</div><div style="font-size:20px;font-weight:700;color:#e74c3c" id="dAccesses2">0</div></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+<div class="modal-overlay" id="fm">
+<div class="modal">
+<h2 id="mt">فتح الملف</h2>
+<p id="md" style="text-align:center;color:var(--ts);margin-bottom:15px"></p>
+<div class="mbtns">
+<button class="btn btn-suc" id="earthBtn">🌍 Google Earth</button>
+<button class="btn btn-pri" id="dlBtn">⬇️ تحميل</button>
+</div>
+<div style="margin-top:12px"><button class="btn btn-out btn-sm" onclick="cls('fm')" style="width:100%">إغلاق</button></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="infoModal">
+<div class="modal">
+<h2>ℹ️ معلومات</h2>
+<div style="text-align:center;line-height:2;color:var(--ts);font-size:15px;">
+<div style="font-size:40px;margin-bottom:10px;">🗺️</div>
+<h3 style="color:var(--t);margin-bottom:10px;">BAHA - منصة الخرائط</h3>
+<p id="infoDeveloper">...</p>
+<p id="infoContact">...</p>
+<hr style="border-color:rgba(255,255,255,0.1);margin:15px 0;">
+<p style="font-size:13px;">BAHA v1.0</p>
+</div>
+<div class="mbtns"><button class="btn btn-cncl" onclick="cls('infoModal')">إغلاق</button></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="inqModal">
+<div class="modal">
+<h2>📞 استفسارات</h2>
+<div style="text-align:center;line-height:2;color:var(--ts);font-size:15px;">
+<div style="font-size:40px;margin-bottom:10px;">💬</div>
+<p id="inqText">...</p>
+<hr style="border-color:rgba(255,255,255,0.1);margin:15px 0;">
+<p style="font-size:13px;">نرحب باستفساراتكم</p>
+</div>
+<div class="mbtns"><button class="btn btn-cncl" onclick="cls('inqModal')">إغلاق</button></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="upm">
+<div class="modal" style="max-width:500px">
+<h2>📤 رفع ملفات</h2>
+<div class="fg">
+<label>المجلد الهدف</label>
+<select id="upFolder" style="width:100%;padding:8px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;background:var(--sbg);color:var(--t);font-size:14px"></select>
+</div>
+<div class="fg"><label>اختر الملفات</label>
+<div class="up-area" id="upa" onclick="document.getElementById('fi').click()">
+<div class="uic" id="uic">📂</div><p id="upt">اختر ملفات KMZ</p><p class="ht">يمكنك اختيار عدة ملفات</p>
+<input type="file" id="fi" accept=".kmz,.kml" multiple style="display:none" onchange="selF(event)">
+</div>
+<div id="sfi" style="display:none;margin-top:8px;padding:10px;background:rgba(0,201,167,0.1);border-radius:6px;font-size:13px;max-height:120px;overflow-y:auto"></div>
+</div>
+<div class="mbtns">
+<button class="btn btn-suc" onclick="upF()" id="upb">📤 رفع الكل</button>
+<button class="btn btn-cncl" onclick="cls('upm')">إلغاء</button>
+</div>
+<div id="upp" style="display:none;margin-top:12px"><div class="pbar"><div class="pfill" id="pf"></div></div><p id="ppt" style="text-align:center;margin-top:6px;font-size:13px;color:var(--ts)">جاري...</p></div>
+</div>
+</div>
+
+<script src="js/dash.js?v=5"></script>
+</body>
+</html>
