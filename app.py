@@ -1,6 +1,6 @@
-import json, os, uuid, sys
+import json, os, uuid, sys, shutil, io
 try:
-    from flask import Flask, request, jsonify, session, send_from_directory
+    from flask import Flask, request, jsonify, session, send_from_directory, send_file
 except ImportError:
     print("Flask not installed. Run: py -m pip install flask")
     sys.exit(1)
@@ -9,11 +9,34 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'baha-secret-key-2024')
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024
 BASE = os.path.dirname(os.path.abspath(__file__))
-USERS = os.path.join(BASE, 'users.json')
-CONFIG = os.path.join(BASE, 'config.json')
-UPLOADS = os.path.join(BASE, 'uploads')
+DATA_DIR = os.environ.get('DATA_DIR', BASE)
+USERS = os.path.join(DATA_DIR, 'users.json')
+CONFIG = os.path.join(DATA_DIR, 'config.json')
+UPLOADS = os.path.join(DATA_DIR, 'uploads')
 PUBLIC = os.path.join(BASE, 'public')
 os.makedirs(UPLOADS, exist_ok=True)
+if DATA_DIR != BASE:
+    for f in ['users.json', 'config.json']:
+        src = os.path.join(BASE, f)
+        dst = os.path.join(DATA_DIR, f)
+        if os.path.isfile(src) and not os.path.isfile(dst):
+            shutil.copy2(src, dst)
+
+B2_ENABLED = False
+try:
+    from b2sdk.v1 import B2Api, InMemoryAccountInfo
+    B2_KEY_ID = os.environ.get('B2_KEY_ID', '')
+    B2_APP_KEY = os.environ.get('B2_APP_KEY', '')
+    B2_BUCKET_NAME = os.environ.get('B2_BUCKET', '')
+    if B2_KEY_ID and B2_APP_KEY and B2_BUCKET_NAME:
+        b2_info = InMemoryAccountInfo()
+        b2_api = B2Api(b2_info)
+        b2_api.authorize_account("production", B2_KEY_ID, B2_APP_KEY)
+        b2_bucket = b2_api.get_bucket_by_name(B2_BUCKET_NAME)
+        B2_ENABLED = True
+        print("Backblaze B2 connected")
+except ImportError:
+    print("b2sdk not installed. Run: pip install b2sdk")
 
 def rd(p):
     try: return json.load(open(p, 'r', encoding='utf-8'))
@@ -29,6 +52,12 @@ def load_cfg():
 def logged_in(): return 'user' in session
 
 def is_admin(): return 'user' in session and session['user'].get('role') == 'admin'
+
+def del_b2_file(b2fn):
+    if B2_ENABLED and b2fn:
+        try:
+            b2_bucket.delete_file_version(b2fn)
+        except: pass
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -101,11 +130,12 @@ def del_folder(fid):
     fls = cfg.get('folders', [])
     if fid == 1: return jsonify({'error': 'لا يمكن حذف المجلد الرئيسي'}), 400
     fls = [x for x in fls if x['id'] != fid and x.get('parentId') != fid]
+    for f in cfg.get('kmzFiles', []):
+        if f.get('folderId') == fid:
+            if f.get('b2FileName'): del_b2_file(f['b2FileName'])
+            elif os.path.exists(f.get('path', '')): os.remove(f['path'])
     cfg['folders'] = fls
     cfg['kmzFiles'] = [x for x in cfg.get('kmzFiles', []) if x.get('folderId') != fid]
-    for f in cfg['kmzFiles']:
-        if os.path.exists(f.get('path', '')): os.remove(f['path'])
-    cfg['kmzFiles'] = [x for x in cfg['kmzFiles'] if x.get('folderId') != fid]
     wr(CONFIG, cfg)
     return jsonify({'ok': True})
 
@@ -117,7 +147,8 @@ def kmz_files():
     files = cfg.get('kmzFiles', [])
     if fid: files = [f for f in files if f.get('folderId') == fid]
     for f in files:
-        if f.get('path'): f['url'] = f'/uploads/{os.path.basename(f["path"])}'
+        if f.get('b2FileName'): f['url'] = f'/uploads/{os.path.basename(f["b2FileName"])}'
+        elif f.get('path'): f['url'] = f'/uploads/{os.path.basename(f["path"])}'
     return jsonify(files)
 
 @app.route('/api/upload', methods=['POST'])
@@ -135,11 +166,19 @@ def upload():
         if ext not in ['.kmz', '.kml']: continue
         nm = f.filename.replace(ext, '')
         unique = f'{uuid.uuid4().hex}{ext}'; path = os.path.join(UPLOADS, unique); f.save(path)
-        files.append({
+        entry = {
             'id': max((x['id'] for x in files), default=0) + 1,
-            'name': nm, 'description': '', 'path': path,
+            'name': nm, 'description': '',
             'fileName': f.filename, 'folderId': folder_id
-        })
+        }
+        if B2_ENABLED:
+            b2fn = f'uploads/{unique}'
+            b2_bucket.upload_local_file(local_file=path, file_name=b2fn)
+            os.remove(path)
+            entry['b2FileName'] = b2fn
+        else:
+            entry['path'] = path
+        files.append(entry)
         results.append(f.filename)
     cfg['kmzFiles'] = files; wr(CONFIG, cfg)
     return jsonify({'ok': True, 'count': len(results), 'files': results})
@@ -150,9 +189,26 @@ def del_file(fid):
     cfg = load_cfg(); files = cfg.get('kmzFiles', [])
     f = next((x for x in files if x['id'] == fid), None)
     if not f: return jsonify({'error': 'غير موجود'}), 404
-    if os.path.exists(f.get('path', '')): os.remove(f['path'])
+    if f.get('b2FileName'): del_b2_file(f['b2FileName'])
+    elif os.path.exists(f.get('path', '')): os.remove(f['path'])
     cfg['kmzFiles'] = [x for x in files if x['id'] != fid]; wr(CONFIG, cfg)
     return jsonify({'ok': True})
+
+@app.route('/uploads/<fn>')
+def uploaded(fn):
+    if B2_ENABLED:
+        cfg = load_cfg()
+        for f in cfg.get('kmzFiles', []):
+            b2fn = f.get('b2FileName', '')
+            if b2fn and os.path.basename(b2fn) == fn:
+                data = io.BytesIO()
+                try:
+                    b2_bucket.download_file_by_name(b2fn).download(data)
+                    data.seek(0)
+                    return send_file(data, mimetype='application/octet-stream', download_name=f.get('fileName', fn))
+                except: return jsonify({'error': 'خطأ في التحميل'}), 500
+        return jsonify({'error': 'الملف غير موجود'}), 404
+    return send_from_directory(UPLOADS, fn)
 
 @app.route('/api/users', methods=['GET', 'POST'])
 def users():
@@ -195,9 +251,6 @@ def config():
     if 'siteInfo' in d: c['siteInfo'] = d['siteInfo']
     if 'folders' in d: c['folders'] = d['folders']
     wr(CONFIG, c); return jsonify({'ok': True})
-
-@app.route('/uploads/<fn>')
-def uploaded(fn): return send_from_directory(UPLOADS, fn)
 
 @app.route('/')
 def idx(): return send_from_directory(PUBLIC, 'index.html')
