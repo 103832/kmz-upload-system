@@ -5,7 +5,7 @@ except ImportError:
     print("Flask not installed. Run: py -m pip install flask")
     sys.exit(1)
 
-app = Flask(__name__, static_folder=None)
+app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'baha-secret-key-2024')
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024
 BASE = os.path.dirname(os.path.abspath(__file__))
