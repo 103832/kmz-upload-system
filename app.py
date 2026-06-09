@@ -5,13 +5,14 @@ except ImportError:
     print("Flask not installed. Run: py -m pip install flask")
     sys.exit(1)
 
-app = Flask(__name__, static_folder='public', static_url_path='')
+app = Flask(__name__, static_folder=None)
 app.secret_key = os.environ.get('SECRET_KEY', 'baha-secret-key-2024')
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024
 BASE = os.path.dirname(os.path.abspath(__file__))
 USERS = os.path.join(BASE, 'users.json')
 CONFIG = os.path.join(BASE, 'config.json')
 UPLOADS = os.path.join(BASE, 'uploads')
+PUBLIC = os.path.join(BASE, 'public')
 os.makedirs(UPLOADS, exist_ok=True)
 
 def rd(p):
@@ -199,12 +200,13 @@ def config():
 def uploaded(fn): return send_from_directory(UPLOADS, fn)
 
 @app.route('/')
-def idx(): return send_from_directory('public', 'index.html')
+def idx(): return send_from_directory(PUBLIC, 'index.html')
 
 @app.route('/<path:p>')
 def stat(p):
-    if os.path.isfile(os.path.join('public', p)): return send_from_directory('public', p)
-    return send_from_directory('public', 'index.html')
+    fp = os.path.join(PUBLIC, p)
+    if os.path.isfile(fp): return send_from_directory(PUBLIC, p)
+    return send_from_directory(PUBLIC, 'index.html')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 2525))
